@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS — Tasks</title>
+  <link rel="stylesheet" href="../asset/css/style.css">
+  <link rel="stylesheet" href="../asset/css/tasks.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="logo">StudyOS</div>
+      <div class="section">
+        <h4>MAIN</h4>
+        <a href="../index.html"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="timetable.html"><span class="nav-icon">📅</span> Timetable</a>
+        <a href="tasks.html" class="active"><span class="nav-icon">✅</span> Tasks</a>
+        <a href="focustimer.html"><span class="nav-icon">⏱</span> Focus timer</a>
+        <h4>STUDY</h4>
+        <a href="flashcards.html"><span class="nav-icon">🃏</span> Flashcards</a>
+        <a href="notes.html"><span class="nav-icon">📝</span> Notes</a>
+        <a href="gpacalc.html"><span class="nav-icon">📊</span> GPA calculator</a>
+        <a href="aitutor.html"><span class="nav-icon">🤖</span> AI tutor</a>
+      </div>
+      <div class="upgrade-btn">⭐ Upgrade to Premium</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <div class="topbar">
+        <div class="page-title">Tasks</div>
+        <div class="topbar-right">
+          <button class="tk-btn tk-btn-primary" id="open-add-task">+ Add task</button>
+          <div class="avatar">IR</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- FILTERS -->
+        <div class="filters">
+          <button class="filter-tab active" data-filter="all">All <span id="count-all">0</span></button>
+          <button class="filter-tab" data-filter="today">Today <span id="count-today">0</span></button>
+          <button class="filter-tab" data-filter="upcoming">Upcoming</button>
+          <button class="filter-tab" data-filter="done">Completed</button>
+          <div class="filter-right">
+            <input class="tk-search" id="search-input" placeholder="Search tasks...">
+          </div>
+        </div>
+
+        <!-- KANBAN -->
+        <div class="kanban">
+          <div class="k-col" id="col-todo" data-status="todo">
+            <div class="k-col-header">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#ef4444"></span>
+                To do
+                <span class="k-count" id="count-todo">0</span>
+              </div>
+              <button class="k-add-btn" data-status="todo">+</button>
+            </div>
+            <div class="k-cards" id="cards-todo" ondragover="onDragOver(event)" ondrop="onDrop(event,'todo')"></div>
+            <button class="k-add-inline" data-status="todo">+ Add task</button>
+          </div>
+
+          <div class="k-col" id="col-inprogress" data-status="inprogress">
+            <div class="k-col-header">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#f59e0b"></span>
+                In progress
+                <span class="k-count" id="count-inprogress">0</span>
+              </div>
+              <button class="k-add-btn" data-status="inprogress">+</button>
+            </div>
+            <div class="k-cards" id="cards-inprogress" ondragover="onDragOver(event)" ondrop="onDrop(event,'inprogress')"></div>
+            <button class="k-add-inline" data-status="inprogress">+ Add task</button>
+          </div>
+
+          <div class="k-col" id="col-done" data-status="done">
+            <div class="k-col-header">
+              <div class="k-col-title">
+                <span class="k-dot" style="background:#22c55e"></span>
+                Done
+                <span class="k-count" id="count-done">0</span>
+              </div>
+              <button class="k-clear-btn" id="clear-done">Clear</button>
+            </div>
+            <div class="k-cards" id="cards-done" ondragover="onDragOver(event)" ondrop="onDrop(event,'done')"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD / EDIT MODAL -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="modal-title">+ Add task</span>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+
+      <div class="form-field" style="margin-bottom:10px;">
+        <div class="form-label">Task name</div>
+        <input class="form-input" id="f-name" placeholder="e.g. Physics I — Chapter 3 exercises">
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <div class="form-label">Subject</div>
+          <input class="form-input" id="f-subject" placeholder="e.g. Physics I">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Type</div>
+          <select class="form-input" id="f-type">
+            <option>Assignment</option>
+            <option>Exam</option>
+            <option>Lab</option>
+            <option>Tutorial</option>
+            <option>Project</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <div class="form-label">Priority</div>
+          <select class="form-input" id="f-priority">
+            <option value="high">🔴 High</option>
+            <option value="medium" selected>🟡 Medium</option>
+            <option value="low">🟢 Low</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Status</div>
+          <select class="form-input" id="f-status">
+            <option value="todo">To do</option>
+            <option value="inprogress">In progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <div class="form-label">Due date</div>
+          <input class="form-input" id="f-date" type="date">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Due time (optional)</div>
+          <input class="form-input" id="f-time" type="time">
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="tk-btn" id="modal-cancel">Cancel</button>
+        <button class="tk-btn" id="modal-delete" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5;display:none;">Delete</button>
+        <button class="tk-btn tk-btn-primary" id="modal-save">Save task</button>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+  <a href="../index.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+  </a>
+  <a href="timetable.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Timetable
+  </a>
+  <a href="tasks.html" class="active">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Tasks
+  </a>
+  <a href="gpacalc.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    GPA
+  </a>
+  <a href="aitutor.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    AI Tutor
+  </a>
+</nav>
+
+  <script src="../asset/js/tasks.js"></script>
+</body>
+</html>

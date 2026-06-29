@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS — Focus Timer</title>
+  <link rel="stylesheet" href="../asset/css/style.css">
+  <link rel="stylesheet" href="../asset/css/focustimer.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="logo">StudyOS</div>
+      <div class="section">
+        <h4>MAIN</h4>
+        <a href="../index.html"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="timetable.html"><span class="nav-icon">📅</span> Timetable</a>
+        <a href="tasks.html"><span class="nav-icon">✅</span> Tasks</a>
+        <a href="focustimer.html" class="active"><span class="nav-icon">⏱</span> Focus timer</a>
+        <h4>STUDY</h4>
+        <a href="flashcards.html"><span class="nav-icon">🃏</span> Flashcards</a>
+        <a href="notes.html"><span class="nav-icon">📝</span> Notes</a>
+        <a href="gpacalc.html"><span class="nav-icon">📊</span> GPA calculator</a>
+        <a href="aitutor.html"><span class="nav-icon">🤖</span> AI tutor</a>
+      </div>
+      <div class="upgrade-btn">⭐ Upgrade to Premium</div>
+    </div>
+
+    <div class="main-content">
+      <div class="topbar">
+        <div class="page-title">Focus Timer</div>
+        <div class="topbar-right">
+          <button class="ft-btn" id="notif-btn">🔔 Notifications</button>
+          <div class="avatar">IR</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="ft-layout">
+
+          <!-- LEFT -->
+          <div class="ft-left">
+            <!-- MODE TABS -->
+            <div class="mode-tabs">
+              <button class="mode-tab active" data-mode="focus">Pomodoro</button>
+              <button class="mode-tab" data-mode="short">Short break</button>
+              <button class="mode-tab" data-mode="long">Long break</button>
+              <button class="mode-tab" data-mode="custom">Custom</button>
+            </div>
+
+            <!-- RING -->
+            <div class="timer-ring-wrap">
+              <svg width="200" height="200" viewBox="0 0 200 200">
+                <circle class="ring-bg" cx="100" cy="100" r="90"/>
+                <circle class="ring-progress" id="ring" cx="100" cy="100" r="90"/>
+              </svg>
+              <div class="timer-text">
+                <div class="timer-time" id="timer-display">25:00</div>
+                <div class="timer-mode" id="timer-mode-label">Focus session</div>
+              </div>
+            </div>
+
+            <!-- SUBJECT -->
+            <div class="subject-tag" id="subject-tag">📚 Select subject</div>
+            <select class="subject-select hidden" id="subject-select">
+              <option value="">— No subject —</option>
+            </select>
+
+            <!-- SESSION DOTS -->
+            <div class="session-dots" id="session-dots"></div>
+            <div class="session-info" id="session-info"></div>
+
+            <!-- CONTROLS -->
+            <div class="timer-controls">
+              <button class="ctrl-btn" id="reset-btn" title="Restart">↩</button>
+              <button class="play-btn" id="play-btn">▶</button>
+              <button class="ctrl-btn" id="skip-btn" title="Skip">↷</button>
+            </div>
+
+            <!-- DURATION SETTINGS -->
+            <div class="timer-settings">
+              <div class="setting-box">
+                <div class="setting-val" id="s-focus">25</div>
+                <div class="setting-lbl">Focus (min)</div>
+                <div class="setting-controls">
+                  <button class="s-ctrl" data-target="focus" data-dir="-1">−</button>
+                  <button class="s-ctrl" data-target="focus" data-dir="1">+</button>
+                </div>
+              </div>
+              <div class="setting-box">
+                <div class="setting-val" id="s-short">5</div>
+                <div class="setting-lbl">Short break</div>
+                <div class="setting-controls">
+                  <button class="s-ctrl" data-target="short" data-dir="-1">−</button>
+                  <button class="s-ctrl" data-target="short" data-dir="1">+</button>
+                </div>
+              </div>
+              <div class="setting-box">
+                <div class="setting-val" id="s-long">15</div>
+                <div class="setting-lbl">Long break</div>
+                <div class="setting-controls">
+                  <button class="s-ctrl" data-target="long" data-dir="-1">−</button>
+                  <button class="s-ctrl" data-target="long" data-dir="1">+</button>
+                </div>
+              </div>
+              <div class="setting-box">
+                <div class="setting-val" id="s-sessions">4</div>
+                <div class="setting-lbl">Sessions</div>
+                <div class="setting-controls">
+                  <button class="s-ctrl" data-target="sessions" data-dir="-1">−</button>
+                  <button class="s-ctrl" data-target="sessions" data-dir="1">+</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT -->
+          <div class="ft-right">
+            <div class="ft-card">
+              <div class="ft-card-title">TODAY</div>
+              <div class="today-stats">
+                <div class="today-stat">
+                  <div class="today-num" id="stat-sessions" style="color:#2563eb">0</div>
+                  <div class="today-lbl">Sessions</div>
+                </div>
+                <div class="today-stat">
+                  <div class="today-num" id="stat-mins" style="color:#22c55e">0</div>
+                  <div class="today-lbl">Mins focused</div>
+                </div>
+                <div class="today-stat">
+                  <div class="today-num" id="stat-goal" style="color:#7eb3f7">3</div>
+                  <div class="today-lbl">Daily goal</div>
+                </div>
+                <div class="today-stat">
+                  <div class="today-num" id="stat-pct" style="color:#f0c46a">0%</div>
+                  <div class="today-lbl">Goal progress</div>
+                </div>
+              </div>
+              <div class="goal-bar-wrap" style="margin-top:10px;">
+                <div class="goal-bar" id="goal-bar" style="width:0%"></div>
+              </div>
+            </div>
+
+            <div class="ft-card">
+              <div class="ft-card-title">STUDY STREAK</div>
+              <div class="streak-big" id="streak-display">🔥 0</div>
+              <div style="font-size:10px;color:#7d8ca3;text-align:center;">Days in a row</div>
+            </div>
+
+            <div class="ft-card">
+              <div class="ft-card-title">TODAY'S SESSIONS</div>
+              <div id="session-history"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+  <a href="../index.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+  </a>
+  <a href="timetable.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Timetable
+  </a>
+  <a href="tasks.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Tasks
+  </a>
+  <a href="gpacalc.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    GPA
+  </a>
+  <a href="aitutor.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    AI Tutor
+  </a>
+</nav>
+  <script src="../asset/js/focustimer.js"></script>
+</body>
+</html>

@@ -1,0 +1,275 @@
+/* BASE */
+body {
+  margin: 0;
+  background: #07111f;
+  font-family: sans-serif;
+}
+
+/* LAYOUT */
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* SIDEBAR */
+.sidebar {
+  width: 200px;
+  min-height: 100vh;
+  background: #0b1729;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0;
+  left: 0;
+   border-right: 1px solid #16253f; /* ← garis kanan sidebar */
+}
+
+.logo {
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 32px;
+  padding-bottom: 42px;  
+  border-bottom: 1px solid #16253f; /* ← garis bawah StudyOS */
+  margin-right: -16px;
+  margin-left: -16px;
+  text-align: center;
+}
+
+.section h4 {
+  color: #7d8ca3;
+  font-size: 11px;
+  margin-bottom: 10px;
+  margin-top: 20px;
+}
+
+.section a {
+  display: block;
+  text-decoration: none;
+  color: white;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  font-size: 14px;
+}
+
+.section a:hover { background: #16253f; }
+
+.active { background: #2563eb; }
+
+.upgrade-btn {
+  margin-top: 70px;
+  background: #2563eb;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+/* MAIN CONTENT */
+.main-content {
+  margin-left: 232px;
+  flex: 1;
+  background: #07111f;
+  min-height: 100vh;
+}
+
+/* TOPBAR */
+.topbar {
+  background: #0b1729;
+  border-bottom: 1px solid #16253f;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.page-title {
+  color: white;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #2563eb;
+  color: white;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* CONTENT AREA */
+.content { padding: 24px; }
+
+.greeting {
+  color: white;
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.date-txt {
+  color: #7d8ca3;
+  font-size: 12px;
+  margin: 0 0 20px;
+}
+
+/* STATS */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  background: #0b1729;
+  border: 1px solid #16253f;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.stat-num {
+  font-size: 24px;
+  font-weight: 700;
+  color: white;
+}
+
+.stat-num.streak { color: #f59e0b; }
+.stat-num.gpa { color: #22c55e; }
+
+.stat-lbl {
+  font-size: 11px;
+  color: #7d8ca3;
+  margin-top: 4px;
+}
+
+/* TWO COLUMN */
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* balik 2 column */
+  gap: 16px;
+}
+
+.card {
+  background: #0b1729;
+  border: 1px solid #16253f;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.card-title {
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* TASKS */
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #16253f;
+}
+
+.task-item:last-child { border-bottom: none; }
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot.red { background: #ef4444; }
+.dot.amber { background: #f59e0b; }
+.dot.green { background: #22c55e; }
+
+.tname {
+  color: #cbd5e1;
+  font-size: 12px;
+  flex: 1;
+}
+
+.ttime {
+  color: #7d8ca3;
+  font-size: 11px;
+}
+
+/* TOOLS */
+.tools-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.tool-btn {
+  display: block;
+  background: #16253f;
+  color: #cbd5e1;
+  text-decoration: none;
+  padding: 12px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.tool-btn:hover { background: #1e3a5f; }
+
+/* PHONE */
+@media (max-width: 767px) {
+  .sidebar { display: none; }
+  .main-content { margin-left: 0; padding-bottom: 70px; }
+  .stats-row { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; }
+}
+/* BOTTOM NAV - mobile only */
+.bottom-nav {
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #0b1729;
+    border-top: 1px solid #16253f;
+    height: 60px;
+    z-index: 999;
+  }
+
+  .bottom-nav a {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #7d8ca3;
+    text-decoration: none;
+    font-size: 10px;
+    gap: 4px;
+  }
+
+  .bottom-nav a.active {
+    color: #2563eb;
+    background: transparent;
+  }
+
+  .bottom-nav a svg {
+    width: 20px;
+    height: 20px;
+  }
+}

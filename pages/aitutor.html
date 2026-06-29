@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS — AI Tutor</title>
+  <link rel="stylesheet" href="../asset/css/style.css">
+  <link rel="stylesheet" href="../asset/css/aitutor.css">
+</head>
+<body>
+  <div class="app-layout">
+    <div class="sidebar">
+      <div class="logo">StudyOS</div>
+      <div class="section">
+        <h4>MAIN</h4>
+        <a href="../index.html"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="timetable.html"><span class="nav-icon">📅</span> Timetable</a>
+        <a href="tasks.html"><span class="nav-icon">✅</span> Tasks</a>
+        <a href="focustimer.html"><span class="nav-icon">⏱</span> Focus timer</a>
+        <h4>STUDY</h4>
+        <a href="flashcards.html"><span class="nav-icon">🃏</span> Flashcards</a>
+        <a href="notes.html"><span class="nav-icon">📝</span> Notes</a>
+        <a href="gpacalc.html"><span class="nav-icon">📊</span> GPA calculator</a>
+        <a href="aitutor.html" class="active"><span class="nav-icon">🤖</span> AI tutor</a>
+      </div>
+      <div class="upgrade-btn">⭐ Upgrade to Premium</div>
+    </div>
+
+    <div class="main-content">
+      <div class="topbar">
+        <div class="page-title">AI Tutor</div>
+        <div class="topbar-right">
+          <button class="ai-btn" id="history-toggle">☰ Chats</button>
+          <button class="ai-btn ai-btn-primary" id="new-chat-btn">+ New chat</button>
+          <div class="avatar">IR</div>
+        </div>
+      </div>
+
+      <div class="ai-layout">
+
+        <!-- HISTORY PANEL -->
+        <div class="ai-history" id="ai-history">
+          <div class="history-header">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span class="history-title">Chats</span>
+              <button class="history-close" id="history-close">✕</button>
+            </div>
+            <select class="subject-filter" id="history-filter">
+              <option value="">All subjects</option>
+            </select>
+          </div>
+          <div class="history-list" id="history-list"></div>
+        </div>
+
+        <!-- OVERLAY -->
+        <div class="history-overlay" id="history-overlay"></div>
+
+        <!-- CHAT AREA -->
+        <div class="ai-chat">
+          <div class="chat-topbar">
+            <div class="chat-subject-row">
+              <span style="font-size:11px;color:#7d8ca3;">Subject:</span>
+              <select class="subject-select" id="chat-subject">
+                <option value="">— Select subject —</option>
+              </select>
+            </div>
+            <div class="query-counter" id="query-counter">0 / 5 queries today</div>
+          </div>
+
+          <div class="chat-messages" id="chat-messages">
+            <div class="empty-chat">
+              <div class="empty-icon">🤖</div>
+              <div class="empty-title">Ask me anything</div>
+              <div class="empty-sub">Select a subject above and start asking questions about your studies.</div>
+              <div class="quick-actions">
+                <button class="qa-btn" onclick="insertPrompt('Explain this concept to me simply:')">💡 Explain a concept</button>
+                <button class="qa-btn" onclick="insertPrompt('Give me 5 practice questions on:')">📝 Practice questions</button>
+                <button class="qa-btn" onclick="insertPrompt('Summarise this topic for me:')">📋 Summarise topic</button>
+                <button class="qa-btn" onclick="insertPrompt('Solve this step by step:')">🧮 Solve step by step</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="suggestions-row" id="suggestions-row" style="display:none;">
+            <button class="suggest-chip" onclick="insertPrompt('Can you give me more examples?')">More examples</button>
+            <button class="suggest-chip" onclick="insertPrompt('Can you simplify that further?')">Simplify</button>
+            <button class="suggest-chip" onclick="insertPrompt('Give me a quiz on this topic')">Quiz me</button>
+            <button class="suggest-chip" onclick="insertPrompt('What are common mistakes students make here?')">Common mistakes</button>
+          </div>
+
+          <div class="chat-input-wrap">
+            <textarea class="chat-input" id="chat-input" placeholder="Ask anything about your subjects..." rows="1"></textarea>
+            <button class="send-btn" id="send-btn">➤</button>
+          </div>
+        </div>
+
+        <!-- RIGHT TOOLS -->
+        <div class="ai-tools">
+          <div class="tools-title">QUICK ACTIONS</div>
+          <button class="tool-chip" onclick="insertPrompt('Explain this concept to me simply:')">💡 Explain concept</button>
+          <button class="tool-chip" onclick="insertPrompt('Give me 5 practice questions on:')">📝 Generate quiz</button>
+          <button class="tool-chip" onclick="insertPrompt('Summarise this topic:')">📋 Summarise topic</button>
+          <button class="tool-chip" onclick="insertPrompt('Solve this step by step:')">🧮 Solve step by step</button>
+          <button class="tool-chip" onclick="insertPrompt('Create flashcard questions for:')">🃏 Make flashcards</button>
+
+          <div class="tools-title" style="margin-top:12px;">TODAY</div>
+          <div class="usage-card">
+            <div class="usage-num" id="usage-num">0/5</div>
+            <div class="usage-lbl">Queries used</div>
+            <div class="usage-bar-wrap"><div class="usage-bar" id="usage-bar"></div></div>
+            <div style="font-size:9px;color:#7d8ca3;text-align:center;margin-top:6px;">Upgrade for unlimited</div>
+          </div>
+
+          <div class="tools-title" style="margin-top:12px;">CONTEXT</div>
+          <div style="font-size:10px;color:#7d8ca3;line-height:1.8;">
+            AI knows your:<br>
+            <span style="color:#cbd5e1;">✓ Subjects</span><br>
+            <span style="color:#cbd5e1;">✓ Timetable</span><br>
+            <span style="color:#7d8ca3;">✗ Notes (Premium)</span><br>
+            <span style="color:#7d8ca3;">✗ Past papers (Premium)</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+  <a href="../index.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+  </a>
+  <a href="timetable.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Timetable
+  </a>
+  <a href="tasks.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Tasks
+  </a>
+  <a href="gpacalc.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    GPA
+  </a>
+  <a href="aitutor.html" class="active">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    AI Tutor
+  </a>
+</nav>
+
+  <script src="../asset/js/aitutor.js"></script>
+</body>
+</html>

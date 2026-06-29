@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Document Title</title>
+</head>
+<body>
+    <body>
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="logo">StudyOS</div>
+      <div class="section">
+        <h4>MAIN</h4>
+        <a href="../index.html" class="active">Dashboard</a>
+        <a href="timetable.html">Timetable</a>
+        <a href="task.html">Tasks</a>
+        <a href="focustimer.html">Focus timer</a>
+        <h4>STUDY</h4>
+        <a href="flashcards.html">Flashcards</a>
+        <a href="notes.html">Notes</a>
+        <a href="gpacalc.html">GPA calculator</a>
+        <a href="aitutor.html">AI tutor</a>
+      </div>
+      <div class="upgrade-btn">Upgrade to Premium</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+
+      <!-- TOP BAR -->
+      <div class="topbar">
+        <div class="page-title">Dashboard</div>
+        <div class="topbar-right">
+          <div class="avatar">IR</div>
+        </div>
+      </div>
+
+      <!-- CONTENT -->
+      <div class="content">
+        <h2 class="greeting">Good morning, Irfan</h2>
+        <p class="date-txt">Friday, 27 June 2025</p>
+
+        <!-- STATS -->
+        <div class="stats-row">
+          <div class="stat-card"><div class="stat-num">3</div><div class="stat-lbl">Tasks due</div></div>
+          <div class="stat-card"><div class="stat-num streak">7</div><div class="stat-lbl">Day streak</div></div>
+          <div class="stat-card"><div class="stat-num">4</div><div class="stat-lbl">Classes today</div></div>
+          <div class="stat-card"><div class="stat-num gpa">3.6</div><div class="stat-lbl">CGPA</div></div>
+        </div>
+
+        <!-- TWO COLUMN -->
+        <div class="two-col">
+          <div class="card">
+            <div class="card-title">Due today</div>
+            <div class="task-item"><span class="dot red"></span><span class="tname">Physics I — Ch.3</span><span class="ttime">9 AM</span></div>
+            <div class="task-item"><span class="dot amber"></span><span class="tname">Intro Eng — Lab report</span><span class="ttime">2 PM</span></div>
+            <div class="task-item"><span class="dot green"></span><span class="tname">Physics II — Revision</span><span class="ttime">Tonight</span></div>
+          </div>
+          <!-- Timetable mini — letak sini -->
+           <div class="card">
+            <div class="card-title">Today's schedule</div>
+           <!-- timetable grid ko letak sini nanti -->
+           </div>
+          <div class="card">
+            <div class="card-title">Quick tools</div>
+            <div class="tools-grid">
+              <a href="focustimer.html" class="tool-btn">⏱ Focus timer</a>
+              <a href="flashcards.html" class="tool-btn">🃏 Flashcards</a>
+              <a href="aitutor.html" class="tool-btn">🤖 AI tutor</a>
+              <a href="gpacalc.html" class="tool-btn">📊 GPA calc</a>
+            </div>
+          </div>
+      </div>
+    </div>
+
+  </div>
+  <nav class="bottom-nav">
+  <a href="../index.html" class="active">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+  </a>
+  <a href="timetable.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Timetable
+  </a>
+  <a href="tasks.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Tasks
+  </a>
+  <a href="gpacalc.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    GPA
+  </a>
+  <a href="aitutor.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    AI Tutor
+  </a>
+</nav>
+  <script src="script.js"></script>
+</body>
+</body>
+</html>

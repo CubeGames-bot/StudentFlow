@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyOS — Timetable</title>
+  <link rel="stylesheet" href="../asset/css/style.css">
+  <link rel="stylesheet" href="../asset/css/timetable.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css">
+</head>
+<body>
+  <div class="app-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="logo">StudyOS</div>
+      <div class="section">
+        <h4>MAIN</h4>
+        <a href="../index.html"><span class="nav-icon">🏠</span> Dashboard</a>
+        <a href="timetable.html" class="active"><span class="nav-icon">📅</span> Timetable</a>
+        <a href="tasks.html"><span class="nav-icon">✅</span> Tasks</a>
+        <a href="focustimer.html"><span class="nav-icon">⏱</span> Focus timer</a>
+        <h4>STUDY</h4>
+        <a href="flashcards.html"><span class="nav-icon">🃏</span> Flashcards</a>
+        <a href="notes.html"><span class="nav-icon">📝</span> Notes</a>
+        <a href="gpacalc.html"><span class="nav-icon">📊</span> GPA calculator</a>
+        <a href="aitutor.html"><span class="nav-icon">🤖</span> AI tutor</a>
+      </div>
+      <div class="upgrade-btn">⭐ Upgrade to Premium</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+      <div class="topbar">
+        <div class="page-title">Timetable</div>
+        <div class="topbar-right">
+          <div id="week-label" class="week-label"></div>
+          <button class="tt-btn" id="prev-week">&#8592;</button>
+          <button class="tt-btn" id="next-week">&#8594;</button>
+          <button class="tt-btn tt-btn-primary" id="open-add-form">+ Add event</button>
+          <div class="avatar">IR</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div id="week-summary" class="week-summary"></div>
+        <div id="calendar"></div>
+        <div id="legend" class="tt-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="modal-title">+ Add event</span>
+        <button class="modal-close" id="modal-close">&times;</button>
+      </div>
+
+      <!-- TOGGLE: Recurring / One-time -->
+      <div class="type-toggle">
+        <button class="toggle-btn active" id="btn-recurring" onclick="setEventType('recurring')">🔁 Recurring</button>
+        <button class="toggle-btn" id="btn-onetime" onclick="setEventType('onetime')">📅 One-time</button>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <div class="form-label">Subject / Event name</div>
+          <input class="form-input" id="f-subject" placeholder="e.g. Physics I">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Type</div>
+          <select class="form-input" id="f-type">
+            <option>Lecture</option>
+            <option>Tutorial</option>
+            <option>Lab</option>
+            <option>Exam</option>
+            <option>Assignment</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- RECURRING: Day dropdown -->
+      <div id="row-day" class="form-row">
+        <div class="form-field">
+          <div class="form-label">Day (repeats every week)</div>
+          <select class="form-input" id="f-day">
+            <option>Monday</option>
+            <option>Tuesday</option>
+            <option>Wednesday</option>
+            <option>Thursday</option>
+            <option>Friday</option>
+            <option>Saturday</option>
+            <option>Sunday</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Time</div>
+          <input class="form-input" id="f-time-recurring" type="time" value="08:00">
+        </div>
+      </div>
+
+      <!-- ONE-TIME: Date + Time -->
+      <div id="row-date" class="form-row" style="display:none;">
+        <div class="form-field">
+          <div class="form-label">Date</div>
+          <input class="form-input" id="f-date" type="date">
+        </div>
+        <div class="form-field">
+          <div class="form-label">Time</div>
+          <input class="form-input" id="f-time-onetime" type="time" value="08:00">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-field">
+          <div class="form-label">Duration (hours)</div>
+          <select class="form-input" id="f-duration">
+            <option value="0.5">30 mins</option>
+            <option value="1">1 hour</option>
+            <option value="1.5">1.5 hours</option>
+            <option value="2" selected>2 hours</option>
+            <option value="3">3 hours</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <div class="form-label">Location</div>
+          <input class="form-input" id="f-location" placeholder="e.g. Block A, Room 203">
+        </div>
+      </div>
+
+      <div class="form-field" style="margin-bottom:12px;">
+        <div class="form-label">Color</div>
+        <div class="color-picker">
+          <div class="color-opt selected" data-color="#1e6fcf" style="background:#1e6fcf"></div>
+          <div class="color-opt" data-color="#16a34a" style="background:#16a34a"></div>
+          <div class="color-opt" data-color="#c2410c" style="background:#c2410c"></div>
+          <div class="color-opt" data-color="#b45309" style="background:#b45309"></div>
+          <div class="color-opt" data-color="#7c3aed" style="background:#7c3aed"></div>
+          <div class="color-opt" data-color="#be185d" style="background:#be185d"></div>
+          <div class="color-opt" data-color="#0f766e" style="background:#0f766e"></div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button class="tt-btn" id="modal-cancel">Cancel</button>
+        <button class="tt-btn" id="modal-delete" style="background:#7f1d1d;border-color:#991b1b;color:#fca5a5;display:none;">Remove</button>
+        <button class="tt-btn tt-btn-primary" id="modal-save">Save</button>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav">
+  <a href="../index.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+    Home
+  </a>
+  <a href="timetable.html" class="active">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+    Timetable
+  </a>
+  <a href="tasks.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+    Tasks
+  </a>
+  <a href="gpacalc.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+    GPA
+  </a>
+  <a href="aitutor.html">
+    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+    AI Tutor
+  </a>
+</nav>
+
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+  <script src="../asset/js/timetable.js"></script>
+</body>
+</html>
