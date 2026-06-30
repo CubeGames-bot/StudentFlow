@@ -212,6 +212,11 @@ function refreshCalendar() {
 document.addEventListener('DOMContentLoaded', function () {
   const calEl = document.getElementById('calendar');
 
+  if (typeof FullCalendar === 'undefined') {
+    calEl.innerHTML = '<div style="padding:40px;text-align:center;color:#f09a6a;">⚠️ Calendar failed to load. Please check your internet connection and refresh.</div>';
+    return;
+  }
+
   calendar = new FullCalendar.Calendar(calEl, {
     initialView: 'timeGridWeek',
     headerToolbar: false,
