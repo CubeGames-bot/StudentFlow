@@ -1,43 +1,77 @@
-// ─── STORAGE ───────────────────────────────────────────
-function loadClasses() {
-  return JSON.parse(localStorage.getItem('studyos_classes')) || [];
-}
-function saveClasses(classes) {
-  localStorage.setItem('studyos_classes', JSON.stringify(classes));
-}
-function genId() {
-  return '_' + Math.random().toString(36).substr(2, 9);
+// ─── SUPABASE CONFIG ───────────────────────────────────
+const SUPABASE_URL = 'https://qvzfumruwhbpzetslsjo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CnEPDGz4KDvSnpFAFnxZqQ_581Xj6DB';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentUser = null;
+
+// ─── LOAD CLASSES FROM SUPABASE ────────────────────────
+async function loadClasses() {
+  if (!currentUser) return [];
+  const { data, error } = await sb
+    .from('classes')
+    .select('*')
+    .eq('user_id', currentUser.id);
+  if (error) { console.error(error); return []; }
+  return data || [];
 }
 
-// ─── STATE ─────────────────────────────────────────────
-let calendar;
-let editingId = null;
-let selectedColor = '#1e6fcf';
-let currentEventType = 'recurring';
+// ─── SAVE CLASS TO SUPABASE ────────────────────────────
+async function saveClassToDb(cls) {
+  const row = {
+    id: cls.id,
+    user_id: currentUser.id,
+    subject: cls.subject,
+    type: cls.type,
+    event_type: cls.eventType,
+    day: cls.day,
+    time: cls.time,
+    date: cls.date,
+    duration: cls.duration,
+    location: cls.location,
+    color: cls.color
+  };
+  const { error } = await sb.from('classes').upsert(row, { onConflict: 'id' });
+  if (error) console.error('saveClass:', error);
+}
 
+// ─── DELETE CLASS FROM SUPABASE ────────────────────────
+async function deleteClassFromDb(id) {
+  const { error } = await sb.from('classes').delete().eq('id', id);
+  if (error) console.error('deleteClass:', error);
+}
+
+// ─── KEEP LOCALSTORAGE IN SYNC (for dashboard) ─────────
+function syncToLocalStorage(classes) {
+  const formatted = classes.map(c => ({
+    id: c.id,
+    subject: c.subject,
+    type: c.type,
+    eventType: c.event_type,
+    day: c.day,
+    time: c.time,
+    date: c.date,
+    duration: c.duration,
+    location: c.location,
+    color: c.color
+  }));
+  localStorage.setItem('studyos_classes', JSON.stringify(formatted));
+}
+
+// ─── DAY HELPERS ───────────────────────────────────────
 const DAY_MAP = {
   Monday: 1, Tuesday: 2, Wednesday: 3,
   Thursday: 4, Friday: 5, Saturday: 6, Sunday: 0
 };
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
-// ─── TOGGLE EVENT TYPE ─────────────────────────────────
-function setEventType(type) {
-  currentEventType = type;
-
-  document.getElementById('btn-recurring').classList.toggle('active', type === 'recurring');
-  document.getElementById('btn-onetime').classList.toggle('active', type === 'onetime');
-  document.getElementById('row-day').style.display = type === 'recurring' ? 'grid' : 'none';
-  document.getElementById('row-date').style.display = type === 'onetime' ? 'grid' : 'none';
-}
-
-// ─── CONVERT CLASS → FULLCALENDAR EVENT ────────────────
 function classToEvent(cls) {
   const pad = n => String(n).padStart(2, '0');
   const durationMins = Math.round(parseFloat(cls.duration || 1) * 60);
+  const eventType = cls.event_type || cls.eventType;
 
-  if (cls.eventType === 'onetime') {
-    // one-time: specific date + time
+  if (eventType === 'onetime') {
     const [h, m] = cls.time.split(':').map(Number);
     const start = new Date(`${cls.date}T${pad(h)}:${pad(m)}:00`);
     const end = new Date(start.getTime() + durationMins * 60000);
@@ -51,12 +85,11 @@ function classToEvent(cls) {
       extendedProps: { ...cls }
     };
   } else {
-    // recurring: every week same day
     const dayNum = DAY_MAP[cls.day];
     const [h, m] = cls.time.split(':').map(Number);
     const startTime = `${pad(h)}:${pad(m)}:00`;
     const totalMins = h * 60 + m + durationMins;
-    const endTime = `${pad(Math.floor(totalMins / 60))}:${pad(totalMins % 60)}:00`;
+    const endTime = `${pad(Math.floor(totalMins/60))}:${pad(totalMins%60)}:00`;
     return {
       id: cls.id,
       title: cls.subject + ' · ' + cls.type,
@@ -70,9 +103,21 @@ function classToEvent(cls) {
   }
 }
 
-// ─── LEGEND ────────────────────────────────────────────
-function buildLegend() {
-  const classes = loadClasses();
+// ─── STATE ─────────────────────────────────────────────
+let calendar;
+let editingId = null;
+let selectedColor = '#1e6fcf';
+let currentEventType = 'recurring';
+
+function setEventType(type) {
+  currentEventType = type;
+  document.getElementById('btn-recurring').classList.toggle('active', type === 'recurring');
+  document.getElementById('btn-onetime').classList.toggle('active', type === 'onetime');
+  document.getElementById('row-day').style.display = type === 'recurring' ? 'grid' : 'none';
+  document.getElementById('row-date').style.display = type === 'onetime' ? 'grid' : 'none';
+}
+
+function buildLegend(classes) {
   const legend = document.getElementById('legend');
   const subjects = {};
   classes.forEach(c => { subjects[c.subject] = c.color || '#1e6fcf'; });
@@ -81,11 +126,9 @@ function buildLegend() {
   ).join('');
 }
 
-function buildSummary() {
-  const classes = loadClasses();
-  const count = classes.length;
+function buildSummary(classes) {
   document.getElementById('week-summary').textContent =
-    count + ' event' + (count !== 1 ? 's' : '') + ' scheduled';
+    classes.length + ' event' + (classes.length !== 1 ? 's' : '') + ' scheduled';
 }
 
 function updateWeekLabel() {
@@ -123,8 +166,8 @@ function openModal(mode, cls) {
     document.getElementById('f-duration').value = cls.duration || '2';
     document.getElementById('f-location').value = cls.location || '';
     setColor(cls.color || '#1e6fcf');
-
-    if (cls.eventType === 'onetime') {
+    const et = cls.event_type || cls.eventType;
+    if (et === 'onetime') {
       setEventType('onetime');
       document.getElementById('f-date').value = cls.date || '';
       document.getElementById('f-time-onetime').value = cls.time || '08:00';
@@ -133,10 +176,8 @@ function openModal(mode, cls) {
       document.getElementById('f-day').value = cls.day || 'Monday';
       document.getElementById('f-time-recurring').value = cls.time || '08:00';
     }
-
     document.getElementById('modal-delete').style.display = 'block';
   }
-
   document.getElementById('modal-overlay').classList.remove('hidden');
   document.getElementById('f-subject').focus();
 }
@@ -153,65 +194,56 @@ function setColor(color) {
   });
 }
 
-// ─── SAVE ──────────────────────────────────────────────
-function saveForm() {
+// ─── SAVE / DELETE ─────────────────────────────────────
+async function saveForm() {
   const subject = document.getElementById('f-subject').value.trim();
   if (!subject) { alert('Please enter a subject name.'); return; }
-
   const isOnetime = currentEventType === 'onetime';
-
-  if (isOnetime && !document.getElementById('f-date').value) {
-    alert('Please pick a date.'); return;
-  }
+  if (isOnetime && !document.getElementById('f-date').value) { alert('Please pick a date.'); return; }
 
   const cls = {
-    id: editingId || genId(),
+    id: editingId || ('cls_' + Date.now()),
     eventType: currentEventType,
     subject,
     type: document.getElementById('f-type').value,
     duration: document.getElementById('f-duration').value,
     location: document.getElementById('f-location').value.trim(),
     color: selectedColor,
-    // recurring fields
     day: document.getElementById('f-day').value,
-    time: isOnetime
-      ? document.getElementById('f-time-onetime').value
-      : document.getElementById('f-time-recurring').value,
-    // one-time fields
+    time: isOnetime ? document.getElementById('f-time-onetime').value : document.getElementById('f-time-recurring').value,
     date: isOnetime ? document.getElementById('f-date').value : null,
   };
 
-  let classes = loadClasses();
-  if (editingId) {
-    classes = classes.map(c => c.id === editingId ? cls : c);
-  } else {
-    classes.push(cls);
-  }
-
-  saveClasses(classes);
+  await saveClassToDb(cls);
   closeModal();
-  refreshCalendar();
+  await refreshCalendar();
 }
 
-function deleteClass() {
+async function deleteClass() {
   if (!editingId) return;
   if (!confirm('Remove this event?')) return;
-  saveClasses(loadClasses().filter(c => c.id !== editingId));
+  await deleteClassFromDb(editingId);
   closeModal();
-  refreshCalendar();
+  await refreshCalendar();
 }
 
-function refreshCalendar() {
+async function refreshCalendar() {
+  const classes = await loadClasses();
+  syncToLocalStorage(classes);
   calendar.removeAllEvents();
-  loadClasses().forEach(cls => calendar.addEvent(classToEvent(cls)));
-  buildLegend();
-  buildSummary();
+  classes.forEach(cls => calendar.addEvent(classToEvent(cls)));
+  buildLegend(classes);
+  buildSummary(classes);
 }
 
 // ─── INIT ──────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', function () {
-  const calEl = document.getElementById('calendar');
+document.addEventListener('DOMContentLoaded', async function () {
+  // Check auth
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { window.location.href = '../login.html'; return; }
+  currentUser = user;
 
+  const calEl = document.getElementById('calendar');
   if (typeof FullCalendar === 'undefined') {
     calEl.innerHTML = '<div style="padding:40px;text-align:center;color:#f09a6a;">⚠️ Calendar failed to load. Please check your internet connection and refresh.</div>';
     return;
@@ -231,56 +263,45 @@ document.addEventListener('DOMContentLoaded', function () {
     nowIndicator: true,
     firstDay: 1,
     dayHeaderFormat: { weekday: 'short', day: 'numeric' },
-    slotLabelFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: true, meridiem: 'short'},
+    slotLabelFormat: { hour: 'numeric', minute: '2-digit', omitZeroMinute: true, meridiem: 'short', hour12: true },
 
-    eventClick: function (info) {
-      openModal('edit', info.event.extendedProps);
-    },
+    eventClick: function (info) { openModal('edit', info.event.extendedProps); },
 
-    eventDrop: function (info) {
+    eventDrop: async function (info) {
       const cls = info.event.extendedProps;
       const newStart = info.event.start;
-      let classes = loadClasses();
+      const pad = n => String(n).padStart(2, '0');
+      const et = cls.event_type || cls.eventType;
 
-      if (cls.eventType === 'onetime') {
-        const pad = n => String(n).padStart(2, '0');
+      if (et === 'onetime') {
         const newDate = `${newStart.getFullYear()}-${pad(newStart.getMonth()+1)}-${pad(newStart.getDate())}`;
         const newTime = `${pad(newStart.getHours())}:${pad(newStart.getMinutes())}`;
-        classes = classes.map(c => c.id === cls.id ? { ...c, date: newDate, time: newTime } : c);
+        await sb.from('classes').update({ date: newDate, time: newTime }).eq('id', cls.id);
       } else {
-        // recurring — update day + time
-        const pad = n => String(n).padStart(2, '0');
         const newDay = DAY_NAMES[newStart.getDay()];
         const newTime = `${pad(newStart.getHours())}:${pad(newStart.getMinutes())}`;
-        classes = classes.map(c => c.id === cls.id ? { ...c, day: newDay, time: newTime } : c);
+        await sb.from('classes').update({ day: newDay, time: newTime }).eq('id', cls.id);
       }
-
-      saveClasses(classes);
-      refreshCalendar();
+      await refreshCalendar();
     },
 
-    eventResize: function (info) {
+    eventResize: async function (info) {
       const cls = info.event.extendedProps;
       const durationMs = info.event.end - info.event.start;
       const durationHours = (durationMs / 3600000).toFixed(1);
-      const classes = loadClasses().map(c =>
-        c.id === cls.id ? { ...c, duration: durationHours } : c
-      );
-      saveClasses(classes);
+      await sb.from('classes').update({ duration: durationHours }).eq('id', cls.id);
     },
 
     eventDidMount: function (info) {
       const cls = info.event.extendedProps;
-      const tag = cls.eventType === 'onetime' ? '📅 One-time' : '🔁 Recurring';
+      const et = cls.event_type || cls.eventType;
+      const tag = et === 'onetime' ? '📅 One-time' : '🔁 Recurring';
       info.el.title = `${cls.subject} · ${cls.type}\n${tag}${cls.location ? '\n📍 ' + cls.location : ''}`;
     }
-    
   });
 
   calendar.render();
-  loadClasses().forEach(cls => calendar.addEvent(classToEvent(cls)));
-  buildLegend();
-  buildSummary();
+  await refreshCalendar();
   updateWeekLabel();
 
   document.getElementById('open-add-form').addEventListener('click', () => openModal('add'));

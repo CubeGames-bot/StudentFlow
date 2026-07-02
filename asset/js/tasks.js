@@ -1,25 +1,16 @@
-// ─── STORAGE ───────────────────────────────────────────
-function loadTasks() {
-  return JSON.parse(localStorage.getItem('studyos_tasks')) || [];
-}
-function saveTasks(tasks) {
-  localStorage.setItem('studyos_tasks', JSON.stringify(tasks));
-}
-function genId() {
-  const count = parseInt(localStorage.getItem('task_counter') || '0') + 1;
-  localStorage.setItem('task_counter', count);
-  return 'task_' + count;
-}
+// ─── SUPABASE CONFIG ───────────────────────────────────
+const SUPABASE_URL = 'https://qvzfumruwhbpzetslsjo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CnEPDGz4KDvSnpFAFnxZqQ_581Xj6DB';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ─── STATE ─────────────────────────────────────────────
+let currentUser = null;
 let editingId = null;
 let dragId = null;
 let activeFilter = 'all';
 let searchQuery = '';
 
-const SUBJECT_COLORS = [
-  '#1e6fcf','#16a34a','#c2410c','#b45309','#7c3aed','#be185d','#0f766e'
-];
+const SUBJECT_COLORS = ['#1e6fcf','#16a34a','#c2410c','#b45309','#7c3aed','#be185d','#0f766e'];
 const subjectColorMap = {};
 let colorIndex = 0;
 
@@ -32,20 +23,51 @@ function getSubjectColor(subject) {
   return subjectColorMap[subject];
 }
 
-// ─── DATE HELPERS ──────────────────────────────────────
+// ─── DB FUNCTIONS ──────────────────────────────────────
+async function loadTasks() {
+  if (!currentUser) return [];
+  const { data, error } = await sb.from('tasks').select('*').eq('user_id', currentUser.id);
+  if (error) { console.error(error); return []; }
+  return data || [];
+}
+
+async function upsertTask(task) {
+  const row = {
+    id: task.id,
+    user_id: currentUser.id,
+    name: task.name,
+    subject: task.subject,
+    type: task.type,
+    priority: task.priority,
+    status: task.status,
+    due_date: task.dueDate,
+    due_time: task.dueTime
+  };
+  const { error } = await sb.from('tasks').upsert(row, { onConflict: 'id' });
+  if (error) console.error('upsertTask:', error);
+}
+
+async function deleteTaskDb(id) {
+  const { error } = await sb.from('tasks').delete().eq('id', id);
+  if (error) console.error('deleteTask:', error);
+}
+
+// ─── HELPERS ───────────────────────────────────────────
+function genId() {
+  const count = parseInt(localStorage.getItem('task_counter') || '0') + 1;
+  localStorage.setItem('task_counter', count);
+  return 'task_' + count;
+}
+
 function isToday(dateStr) {
   if (!dateStr) return false;
-  const today = new Date();
-  const d = new Date(dateStr + 'T00:00:00');
-  return d.toDateString() === today.toDateString();
+  return new Date(dateStr + 'T00:00:00').toDateString() === new Date().toDateString();
 }
 
 function isOverdue(dateStr) {
   if (!dateStr) return false;
-  const today = new Date();
-  today.setHours(0,0,0,0);
-  const d = new Date(dateStr + 'T00:00:00');
-  return d < today;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return new Date(dateStr + 'T00:00:00') < today;
 }
 
 function formatDue(dateStr, timeStr) {
@@ -53,71 +75,52 @@ function formatDue(dateStr, timeStr) {
   const d = new Date(dateStr + 'T00:00:00');
   const today = new Date(); today.setHours(0,0,0,0);
   const diff = Math.round((d - today) / 86400000);
-  let label = '';
-  if (diff === 0) label = 'Today';
-  else if (diff === 1) label = 'Tomorrow';
-  else if (diff === -1) label = 'Yesterday';
-  else if (diff < 0) label = `${Math.abs(diff)}d overdue`;
-  else label = d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' });
-  if (timeStr) label += ' ' + formatTime(timeStr);
+  let label = diff === 0 ? 'Today' : diff === 1 ? 'Tomorrow' : diff === -1 ? 'Yesterday' : diff < 0 ? `${Math.abs(diff)}d overdue` : d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short' });
+  if (timeStr) { const [h,m] = timeStr.split(':').map(Number); label += ` ${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`; }
   return label;
 }
 
-function formatTime(timeStr) {
-  const [h, m] = timeStr.split(':').map(Number);
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  return `${h % 12 || 12}:${String(m).padStart(2,'0')} ${ampm}`;
-}
-
 // ─── RENDER ────────────────────────────────────────────
-function render() {
-  let tasks = loadTasks();
+async function render() {
+  let tasks = await loadTasks();
 
-  // apply search
-  if (searchQuery) {
-    tasks = tasks.filter(t =>
-      t.name.toLowerCase().includes(searchQuery) ||
-      (t.subject && t.subject.toLowerCase().includes(searchQuery))
-    );
-  }
+  // Map DB format to app format
+  tasks = tasks.map(t => ({
+    id: t.id, name: t.name, subject: t.subject, type: t.type,
+    priority: t.priority, status: t.status, dueDate: t.due_date, dueTime: t.due_time
+  }));
 
-  // apply filter
+  // Sync to localStorage for dashboard
+  localStorage.setItem('studyos_tasks', JSON.stringify(tasks));
+
+  if (searchQuery) tasks = tasks.filter(t => t.name?.toLowerCase().includes(searchQuery) || t.subject?.toLowerCase().includes(searchQuery));
   let filtered = tasks;
   if (activeFilter === 'today') filtered = tasks.filter(t => isToday(t.dueDate) && t.status !== 'done');
   else if (activeFilter === 'upcoming') filtered = tasks.filter(t => t.status !== 'done' && t.dueDate && !isToday(t.dueDate) && !isOverdue(t.dueDate));
   else if (activeFilter === 'done') filtered = tasks.filter(t => t.status === 'done');
 
-  // update counts
   document.getElementById('count-all').textContent = tasks.filter(t => t.status !== 'done').length;
   document.getElementById('count-today').textContent = tasks.filter(t => isToday(t.dueDate) && t.status !== 'done').length;
 
-  const statuses = ['todo', 'inprogress', 'done'];
-  statuses.forEach(status => {
+  ['todo','inprogress','done'].forEach(status => {
     const colTasks = filtered.filter(t => t.status === status);
     document.getElementById('count-' + status).textContent = colTasks.length;
     const container = document.getElementById('cards-' + status);
     container.innerHTML = colTasks.map(t => renderCard(t)).join('');
   });
 
-  // attach card events
   document.querySelectorAll('.task-card').forEach(el => {
     const id = el.dataset.id;
-    // drag
     el.addEventListener('dragstart', () => { dragId = id; el.classList.add('dragging'); });
     el.addEventListener('dragend', () => { dragId = null; el.classList.remove('dragging'); });
-    // edit on card click
-    el.addEventListener('click', (e) => {
+    el.addEventListener('click', async (e) => {
       if (e.target.classList.contains('task-checkbox') || e.target.closest('.task-checkbox')) return;
-      openModal('edit', loadTasks().find(t => t.id === id));
+      const allTasks = await loadTasks();
+      const task = allTasks.find(t => t.id === id);
+      if (task) openModal('edit', { id: task.id, name: task.name, subject: task.subject, type: task.type, priority: task.priority, status: task.status, dueDate: task.due_date, dueTime: task.due_time });
     });
-    // checkbox
     const cb = el.querySelector('.task-checkbox');
-    if (cb) {
-      cb.addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleDone(id);
-      });
-    }
+    if (cb) cb.addEventListener('click', e => { e.stopPropagation(); toggleDone(id); });
   });
 }
 
@@ -126,7 +129,6 @@ function renderCard(task) {
   const isDone = task.status === 'done';
   const dueLabel = formatDue(task.dueDate, task.dueTime);
   const overdue = isOverdue(task.dueDate) && !isDone;
-
   return `
     <div class="task-card" draggable="true" data-id="${task.id}">
       <div class="task-top">
@@ -139,46 +141,36 @@ function renderCard(task) {
         ${task.type ? `<span class="task-tag" style="background:#16253f;color:#7d8ca3">${task.type}</span>` : ''}
         ${dueLabel ? `<span class="task-due ${overdue ? 'overdue' : ''}">⏰ ${dueLabel}</span>` : ''}
       </div>
-    </div>
-  `;
+    </div>`;
 }
 
 // ─── DRAG & DROP ───────────────────────────────────────
+async function onDrop(e, status) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (!dragId) return;
+  await sb.from('tasks').update({ status }).eq('id', dragId);
+  await render();
+}
+
 function onDragOver(e) {
   e.preventDefault();
   e.currentTarget.classList.add('drag-over');
 }
 
-function onDrop(e, status) {
-  e.preventDefault();
-  e.currentTarget.classList.remove('drag-over');
-  if (!dragId) return;
-  const tasks = loadTasks().map(t =>
-    t.id === dragId ? { ...t, status } : t
-  );
-  saveTasks(tasks);
-  render();
-}
-
-document.addEventListener('dragover', () => {
-  document.querySelectorAll('.k-cards').forEach(el => el.classList.remove('drag-over'));
-});
-
 // ─── TOGGLE DONE ───────────────────────────────────────
-function toggleDone(id) {
-  const tasks = loadTasks().map(t => {
-    if (t.id !== id) return t;
-    return { ...t, status: t.status === 'done' ? 'todo' : 'done' };
-  });
-  saveTasks(tasks);
-  render();
+async function toggleDone(id) {
+  const { data } = await sb.from('tasks').select('status').eq('id', id).single();
+  if (!data) return;
+  const newStatus = data.status === 'done' ? 'todo' : 'done';
+  await sb.from('tasks').update({ status: newStatus }).eq('id', id);
+  await render();
 }
 
 // ─── MODAL ─────────────────────────────────────────────
 function openModal(mode, task, defaultStatus) {
   editingId = null;
   document.getElementById('modal-delete').style.display = 'none';
-
   if (mode === 'add') {
     document.getElementById('modal-title').textContent = '+ Add task';
     document.getElementById('f-name').value = '';
@@ -200,7 +192,6 @@ function openModal(mode, task, defaultStatus) {
     document.getElementById('f-time').value = task.dueTime || '';
     document.getElementById('modal-delete').style.display = 'block';
   }
-
   document.getElementById('modal-overlay').classList.remove('hidden');
   document.getElementById('f-name').focus();
 }
@@ -210,10 +201,9 @@ function closeModal() {
   editingId = null;
 }
 
-function saveTask() {
+async function saveTask() {
   const name = document.getElementById('f-name').value.trim();
   if (!name) { alert('Please enter a task name.'); return; }
-
   const task = {
     id: editingId || genId(),
     name,
@@ -224,30 +214,26 @@ function saveTask() {
     dueDate: document.getElementById('f-date').value,
     dueTime: document.getElementById('f-time').value,
   };
-
-  let tasks = loadTasks();
-  if (editingId) {
-    tasks = tasks.map(t => t.id === editingId ? task : t);
-  } else {
-    tasks.push(task);
-  }
-
-  saveTasks(tasks);
+  await upsertTask(task);
   closeModal();
-  render();
+  await render();
 }
 
-function deleteTask() {
+async function deleteTask() {
   if (!editingId) return;
   if (!confirm('Delete this task?')) return;
-  saveTasks(loadTasks().filter(t => t.id !== editingId));
+  await deleteTaskDb(editingId);
   closeModal();
-  render();
+  await render();
 }
 
 // ─── INIT ──────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  render();
+document.addEventListener('DOMContentLoaded', async () => {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) { window.location.href = '../login.html'; return; }
+  currentUser = user;
+
+  await render();
 
   document.getElementById('open-add-task').addEventListener('click', () => openModal('add'));
   document.getElementById('modal-close').addEventListener('click', closeModal);
@@ -257,7 +243,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
-  // filter tabs
   document.querySelectorAll('.filter-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       activeFilter = btn.dataset.filter;
@@ -267,21 +252,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // search
   document.getElementById('search-input').addEventListener('input', e => {
     searchQuery = e.target.value.toLowerCase();
     render();
   });
 
-  // add task buttons in columns
   document.querySelectorAll('.k-add-inline, .k-add-btn').forEach(btn => {
     btn.addEventListener('click', () => openModal('add', null, btn.dataset.status));
   });
 
-  // clear done
-  document.getElementById('clear-done').addEventListener('click', () => {
+  document.getElementById('clear-done').addEventListener('click', async () => {
     if (!confirm('Clear all completed tasks?')) return;
-    saveTasks(loadTasks().filter(t => t.status !== 'done'));
-    render();
+    const { data } = await sb.from('tasks').select('id').eq('user_id', currentUser.id).eq('status', 'done');
+    if (data) await Promise.all(data.map(t => sb.from('tasks').delete().eq('id', t.id)));
+    await render();
+  });
+
+  // drag over/drop on columns
+  document.querySelectorAll('.k-cards').forEach(el => {
+    el.addEventListener('dragover', onDragOver);
+    el.addEventListener('drop', e => onDrop(e, el.closest('.k-col').dataset.status));
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
   });
 });
