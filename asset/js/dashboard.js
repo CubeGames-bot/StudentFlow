@@ -1,3 +1,39 @@
+const SUPABASE_URL = 'https://qvzfumruwhbpzetslsjo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CnEPDGz4KDvSnpFAFnxZqQ_581Xj6DB';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// Load user info
+async function loadUserInfo() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) return;
+
+  // Avatar — guna Google profile pic atau initials
+  const avatarEl = document.querySelector('.avatar');
+  if (avatarEl) {
+    const pic = user.user_metadata?.avatar_url;
+    if (pic) {
+      avatarEl.innerHTML = `<img src="${pic}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
+    } else {
+      const initials = (user.user_metadata?.full_name || user.email || 'U')
+        .split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase();
+      avatarEl.textContent = initials;
+    }
+  }
+
+  // Greeting name
+  const greetingEl = document.querySelector('.greeting');
+  if (greetingEl) {
+    const name = user.user_metadata?.full_name?.split(' ')[0] || 
+                 user.email?.split('@')[0] || 'there';
+    const hour = new Date().getHours();
+    const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    greetingEl.textContent = `👋 ${greet}, ${name}`;
+  }
+}
+
+loadUserInfo();
+
 function loadTodaySchedule() {
   const classes = JSON.parse(localStorage.getItem('studyos_classes')) || [];
   const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
