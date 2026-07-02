@@ -5,6 +5,8 @@ const SUPABASE_KEY = 'sb_publishable_CnEPDGz4KDvSnpFAFnxZqQ_581Xj6DB';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
+window.sb = sb; // Expose for debugging
+
 // ─── AUTH HELPERS ──────────────────────────────────────
 async function getUser() {
   const { data: { user } } = await sb.auth.getUser();
