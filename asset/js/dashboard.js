@@ -3,16 +3,16 @@ const SUPABASE_KEY = 'sb_publishable_CnEPDGz4KDvSnpFAFnxZqQ_581Xj6DB';
 const { createClient } = supabase;
 const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// Load user info
 async function loadUserInfo() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) return;
 
-  // Avatar — guna Google profile pic atau initials
   const avatarEl = document.getElementById('user-avatar');
   if (avatarEl) {
-    const pic = user.user_metadata?.avatar_url;
+    const pic = user.user_metadata?.avatar_url || 
+                user.user_metadata?.picture;  // ← Google guna 'picture'
     if (pic) {
+      avatarEl.style.padding = '0';
       avatarEl.innerHTML = `<img src="${pic}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`;
     } else {
       const initials = (user.user_metadata?.full_name || user.email || 'U')
@@ -21,13 +21,17 @@ async function loadUserInfo() {
     }
   }
 
-  // Greeting name
   const greetingEl = document.getElementById('greeting-text');
   if (greetingEl) {
-    const name = user.user_metadata?.full_name?.split(' ')[0] || 
+    // Google ada full_name, email login guna email
+    const fullName = user.user_metadata?.full_name || 
+                     user.user_metadata?.name || '';
+    const name = fullName.split(' ')[0] || 
                  user.email?.split('@')[0] || 'there';
+    
     const hour = new Date().getHours();
-    const greet = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    const greet = hour < 12 ? 'Good morning' : 
+                  hour < 17 ? 'Good afternoon' : 'Good evening';
     greetingEl.textContent = `👋 ${greet}, ${name}`;
   }
 }
