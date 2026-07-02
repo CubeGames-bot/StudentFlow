@@ -9,7 +9,7 @@ async function loadUserInfo() {
   if (!user) return;
 
   // Avatar — guna Google profile pic atau initials
-  const avatarEl = document.querySelector('.avatar');
+  const avatarEl = document.getElementById('user-avatar');
   if (avatarEl) {
     const pic = user.user_metadata?.avatar_url;
     if (pic) {
@@ -22,7 +22,7 @@ async function loadUserInfo() {
   }
 
   // Greeting name
-  const greetingEl = document.querySelector('.greeting');
+  const greetingEl = document.getElementById('greeting-text');
   if (greetingEl) {
     const name = user.user_metadata?.full_name?.split(' ')[0] || 
                  user.email?.split('@')[0] || 'there';
