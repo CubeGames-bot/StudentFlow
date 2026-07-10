@@ -54,9 +54,7 @@ async function deleteTaskDb(id) {
 
 // ─── HELPERS ───────────────────────────────────────────
 function genId() {
-  const count = parseInt(localStorage.getItem('task_counter') || '0') + 1;
-  localStorage.setItem('task_counter', count);
-  return 'task_' + count;
+  return crypto.randomUUID();
 }
 
 function isToday(dateStr) {
