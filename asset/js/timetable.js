@@ -202,7 +202,7 @@ async function saveForm() {
   if (isOnetime && !document.getElementById('f-date').value) { alert('Please pick a date.'); return; }
 
   const cls = {
-    id: editingId || crypto.randomUUID(),,
+    id: editingId || crypto.randomUUID(),
     eventType: currentEventType,
     subject,
     type: document.getElementById('f-type').value,
