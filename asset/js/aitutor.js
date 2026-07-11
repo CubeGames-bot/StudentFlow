@@ -251,10 +251,37 @@ async function sendMessage() {
     const classes = JSON.parse(localStorage.getItem('studyos_classes')) || [];
     const subjects = [...new Set(classes.map(c => c.subject).filter(Boolean))];
 
-    const systemPrompt = `You are a helpful AI tutor for a Malaysian university student.
-The student studies: ${subjects.length ? subjects.join(', ') : 'various subjects'}.
-${subject ? `Current subject context: ${subject}.` : ''}
-Be concise, clear, and educational. Format formulas and equations clearly. Encourage the student. Reply in the same language the student uses (English or Malay).`;
+    // Gather all student data
+  const classes = JSON.parse(localStorage.getItem('studyos_classes')) || [];
+  const tasks = JSON.parse(localStorage.getItem('studyos_tasks')) || [];
+  const cgpa = localStorage.getItem('studyos_cgpa') || 'unknown';
+  const subjects = [...new Set(classes.map(c => c.subject).filter(Boolean))];
+
+  // Today's classes
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const todayName = days[new Date().getDay()];
+  const todayClasses = classes.filter(c => c.eventType === 'recurring' ? c.day === todayName : c.date === new Date().toISOString().split('T')[0]);
+
+  // Pending tasks
+  const pendingTasks = tasks.filter(t => t.status !== 'done');
+
+  const systemPrompt = `You are a smart AI study assistant for a Malaysian university student using StudentFlow app.
+
+  STUDENT DATA:
+  - Subjects: ${subjects.length ? subjects.join(', ') : 'not set'}
+  - Current CGPA: ${cgpa}
+  - Today's classes: ${todayClasses.length ? todayClasses.map(c => `${c.subject} (${c.type}) at ${c.time}`).join(', ') : 'none'}
+  - Pending tasks: ${pendingTasks.length ? pendingTasks.map(t => `${t.name} (due: ${t.dueDate || 'no date'})`).join(', ') : 'none'}
+
+  You can help with:
+  - Explaining concepts and theories
+  - Solving problems step by step
+  - Creating study plans based on their schedule
+  - Giving practice questions
+  - Summarising topics
+  - Advising based on their tasks and deadlines
+
+  Be helpful, concise, and encouraging. Reply in the same language the student uses (English or Malay).`;
 
     // Build Gemini conversation history
     const history = chat.messages.slice(-10).map(m => ({
