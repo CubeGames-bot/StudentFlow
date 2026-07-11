@@ -248,9 +248,6 @@ async function sendMessage() {
   document.getElementById('send-btn').disabled = true;
 
   try {
-    const classes = JSON.parse(localStorage.getItem('studyos_classes')) || [];
-    const subjects = [...new Set(classes.map(c => c.subject).filter(Boolean))];
-
     // Gather all student data
   const classes = JSON.parse(localStorage.getItem('studyos_classes')) || [];
   const tasks = JSON.parse(localStorage.getItem('studyos_tasks')) || [];
