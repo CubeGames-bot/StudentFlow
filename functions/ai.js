@@ -1,4 +1,3 @@
-// functions/ai.js
 export async function onRequestPost(context) {
   const body = await context.request.json();
   const GEMINI_KEY = context.env.GEMINI_API_KEY;
