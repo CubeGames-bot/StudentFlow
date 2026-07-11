@@ -1,5 +1,13 @@
+const GEMINI_API_KEY = process.env.API_KEY;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+
 const FREE_LIMIT = 5;
-const MODEL = 'claude-sonnet-4-6';
+
+// ─── SUPABASE ──────────────────────────────────────────
+const SUPABASE_URL = 'https://qvzfumruwhbpzetslsjo.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_CnEPDGz4KDvSnpFAFnxZqQ_581Xj6DB';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ─── STORAGE ───────────────────────────────────────────
 function loadChats() { return JSON.parse(localStorage.getItem('studyos_chats')) || []; }
@@ -28,6 +36,7 @@ function populateSubjects() {
   const subjects = getSubjects();
   ['chat-subject', 'history-filter'].forEach(id => {
     const sel = document.getElementById(id);
+    if (!sel) return;
     const first = sel.options[0].outerHTML;
     sel.innerHTML = first + subjects.map(s => `<option value="${s}">${s}</option>`).join('');
   });
@@ -62,8 +71,7 @@ function renderHistory(filter) {
         <button class="h-del" data-id="${chat.id}">✕</button>
         <div class="h-title">${escHtml(title)}</div>
         <div class="h-meta">${date}${chat.subject ? ' · ' + chat.subject : ''}</div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 
   container.querySelectorAll('.history-item').forEach(el => {
@@ -187,7 +195,7 @@ function updateUsageUI() {
   }
 }
 
-// ─── SEND ──────────────────────────────────────────────
+// ─── SEND WITH GEMINI ──────────────────────────────────
 async function sendMessage() {
   if (isLoading) return;
   usage = loadUsage();
@@ -199,7 +207,6 @@ async function sendMessage() {
 
   const subject = document.getElementById('chat-subject').value;
 
-  // create new chat if none active
   if (!activeChatId || !chats.find(c => c.id === activeChatId)) {
     const chat = { id: genId(), subject, title: '', messages: [], createdAt: Date.now() };
     chats.unshift(chat);
@@ -211,8 +218,7 @@ async function sendMessage() {
   if (!chat) return;
   if (subject) chat.subject = subject;
 
-  // auto title from first message
-  if (!chat.title || chat.title === '') {
+  if (!chat.title) {
     chat.title = content.length > 45 ? content.slice(0, 45) + '...' : content;
   }
 
@@ -251,18 +257,26 @@ async function sendMessage() {
     const systemPrompt = `You are a helpful AI tutor for a Malaysian university student.
 The student studies: ${subjects.length ? subjects.join(', ') : 'various subjects'}.
 ${subject ? `Current subject context: ${subject}.` : ''}
-Be concise, clear, and educational. Format formulas and equations clearly using text. Encourage the student. Reply in the same language the student uses (English or Malay).`;
+Be concise, clear, and educational. Format formulas and equations clearly. Encourage the student. Reply in the same language the student uses (English or Malay).`;
 
-    const history = chat.messages.slice(-10).map(m => ({ role: m.role, content: m.content }));
+    // Build Gemini conversation history
+    const history = chat.messages.slice(-10).map(m => ({
+      role: m.role === 'user' ? 'user' : 'model',
+      parts: [{ text: m.content }]
+    }));
 
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 1000, system: systemPrompt, messages: history })
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: systemPrompt }] },
+        contents: history,
+        generationConfig: { maxOutputTokens: 1000 }
+      })
     });
 
     const data = await res.json();
-    const reply = data.content?.[0]?.text || 'Sorry, I could not generate a response. Please try again.';
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'Sorry, I could not generate a response. Please try again.';
 
     document.getElementById('typing-indicator')?.remove();
     chat.messages.push({ role: 'assistant', content: reply, time: Date.now() });
@@ -294,12 +308,10 @@ document.addEventListener('DOMContentLoaded', () => {
   renderChat();
   updateUsageUI();
 
-  // hamburger
   document.getElementById('history-toggle').addEventListener('click', openHistory);
   document.getElementById('history-close').addEventListener('click', closeHistory);
   document.getElementById('history-overlay').addEventListener('click', closeHistory);
 
-  // new chat
   document.getElementById('new-chat-btn').addEventListener('click', () => {
     const chat = { id: genId(), subject: '', title: '', messages: [], createdAt: Date.now() };
     chats.unshift(chat);
@@ -312,25 +324,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('chat-input').focus();
   });
 
-  // send
   document.getElementById('send-btn').addEventListener('click', sendMessage);
   document.getElementById('chat-input').addEventListener('keydown', e => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
 
-  // auto resize textarea
   document.getElementById('chat-input').addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.height = Math.min(this.scrollHeight, 120) + 'px';
   });
 
-  // subject change
   document.getElementById('chat-subject').addEventListener('change', function () {
     const chat = chats.find(c => c.id === activeChatId);
     if (chat) { chat.subject = this.value; saveChats(chats); renderHistory(document.getElementById('history-filter').value); }
   });
 
-  // history filter
   document.getElementById('history-filter').addEventListener('change', function () {
     renderHistory(this.value);
   });
